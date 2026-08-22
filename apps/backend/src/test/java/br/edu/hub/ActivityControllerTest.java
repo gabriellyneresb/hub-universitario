@@ -1,3 +1,5 @@
+// apps/backend/src/test/java/br/edu/hub/ActivityControllerTest.java
+
 package br.edu.hub;
 
 import br.edu.hub.entity.Activity;
@@ -85,5 +87,51 @@ class ActivityControllerTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.studentEmail").value("maria@email.com"));
+    }
+
+    /**
+     * {@code GET /api/activities?search=...} deve encontrar atividades pelo
+     * título, ignorando diferenças entre maiúsculas e minúsculas.
+     */
+    @Test
+    void shouldFilterActivitiesByTitleSearchTermIgnoringCase() throws Exception {
+        mockMvc.perform(get("/api/activities").param("search", "workshop"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title").value("Workshop de APIs"));
+    }
+
+    /**
+     * {@code GET /api/activities?search=...} deve encontrar atividades pelo
+     * conteúdo da descrição, não apenas pelo título.
+     */
+    @Test
+    void shouldFilterActivitiesByDescriptionSearchTerm() throws Exception {
+        mockMvc.perform(get("/api/activities").param("search", "lotada"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title").value("Curso lotado"));
+    }
+
+    /**
+     * Um termo de busca que não corresponde a nenhuma atividade deve resultar
+     * em lista vazia com {@code 200 OK}, nunca em erro.
+     */
+    @Test
+    void shouldReturnEmptyListWhenSearchTermMatchesNothing() throws Exception {
+        mockMvc.perform(get("/api/activities").param("search", "termo-inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    /**
+     * Um termo de busca em branco deve ser tratado como "sem busca",
+     * retornando o catálogo completo.
+     */
+    @Test
+    void shouldReturnAllActivitiesWhenSearchTermIsBlank() throws Exception {
+        mockMvc.perform(get("/api/activities").param("search", "  "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
     }
 }

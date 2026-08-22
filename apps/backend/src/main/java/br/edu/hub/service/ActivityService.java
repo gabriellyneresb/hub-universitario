@@ -1,3 +1,5 @@
+// apps/backend/src/main/java/br/edu/hub/service/ActivityService.java
+
 package br.edu.hub.service;
 
 import br.edu.hub.dto.ActivityResponse;
@@ -17,9 +19,27 @@ public class ActivityService {
         this.activityRepository = activityRepository;
     }
 
+    /**
+     * Lista as atividades do catálogo, opcionalmente filtradas por um termo de busca.
+     *
+     * Quando {@code search} é {@code null} ou contém apenas espaços em branco,
+     * retorna o catálogo completo (comportamento equivalente a "sem busca").
+     * Caso contrário, retorna somente as atividades cujo título ou descrição
+     * contenham o termo informado, sem diferenciar maiúsculas de minúsculas,
+     * conforme a jornada "Buscar atividades" do {@code PROJECT.md}.
+     *
+     * @param search termo de busca informado pelo usuário, ou {@code null}/vazio
+     *               para listar todas as atividades
+     * @return atividades correspondentes à busca, ordenadas pela data mais recente
+     */
     @Transactional(readOnly = true)
     public List<ActivityResponse> list(String search) {
-        return activityRepository.findAllByOrderByDateDesc().stream()
+        List<Activity> activities = (search == null || search.isBlank())
+                ? activityRepository.findAllByOrderByDateDesc()
+                : activityRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByDateDesc(
+                        search, search);
+
+        return activities.stream()
                 .map(ActivityResponse::from)
                 .toList();
     }

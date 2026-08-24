@@ -82,19 +82,32 @@ O fluxo de trabalho adotado pela equipe seguiu as seguintes etapas:
   diferentes com nomes idênticos.
 - **Validação e Revisão:** Implementação e testes revisados e validados localmente antes do commit.
 
-### Contribuições e Investigações Gerais (Lucas)
+### Issues/PRs #6 e #7 — Filtro de categoria e atualização reativa após inscrição (Lucas)
 
-- **Investigação:** Leitura cruzada do repositório com o `PROJECT.md` e identificação de falhas pontuais 
-  a partir dos testes existentes.
-- **Geração e Correção:** Auxílio em sugestões de código, correções e elaboração de testes para os arquivos:
-  - `RegistrationService.java`
-  - `GlobalExceptionHandler.java`
-  - `ActivityService.java`
-  - `ActivityRepository.java`
-  - `activityService.ts`
-  - `useActivities.ts`
-- **Validação e Revisão:** Leitura e revisão da lógica sugerida pela IA, adaptação de nomes de variáveis 
-  e mensagens de erro, seguidas da execução completa da suíte de testes.
+- **Investigação:** Identificação da causa raiz dos dois bugs relatados pelo grupo: 
+  em `utils/activity.ts`, a função `filterActivities` tinha uma condição extra que 
+  incluía atividades da categoria Evento independente do filtro selecionado; em 
+  `useActivities.ts`, a mutation `useCreateRegistration` não invalidava o cache do 
+  TanStack Query após uma inscrição bem-sucedida, deixando vagas e inscritos 
+  desatualizados na tela até um reload manual.
+- **Geração e Correção:** Correção do filtro em `utils/activity.ts` (remoção da 
+  condição indevida). Adição de um callback `onSuccess` em `useCreateRegistration` 
+  (`useActivities.ts`) que invalida a queryKey `['activities']`, cobrindo listagem, 
+  detalhe da atividade e lista de inscrições. Criado um novo teste em 
+  `RegistrationForm.test.tsx` para comprovar a invalidação de cache.
+- **Validação e Revisão:** Testes existentes (`activity.test.ts`) confirmaram a 
+  correção do filtro. O teste novo de invalidação de cache foi validado junto com 
+  a suíte completa do frontend (`npm test`, 4/4 passando). Ambas as correções também 
+  foram testadas manualmente na interface.
+- **Resolução de conflitos de merge:** Como responsável por integrar as branches do 
+  grupo à `main`, resolvi conflitos de merge em múltiplas branches (incluindo 
+  `feat/busca-atividades` e `fix/status-http-nao-encontrado`), unindo corretamente 
+  as mudanças de mais de uma pessoa no mesmo arquivo (`useActivities.ts`, 
+  `GlobalExceptionHandler.java`, `ActivityService.java`) sem perder nenhuma das 
+  implementações. Também removi arquivos de build commitados por engano 
+  (`apps/backend/target/`) e criei o `.gitignore` correspondente para evitar 
+  recorrência. Validei cada merge rodando a suíte de testes correspondente 
+  (frontend: `npm test`; backend: `mvnw test`, 9/9 passando) antes de finalizar.
 
 ---
 
@@ -102,7 +115,7 @@ O fluxo de trabalho adotado pela equipe seguiu as seguintes etapas:
 
 - **Backend:** `ActivityRepository.java`, `ActivityService.java`, `RegistrationService.java`, 
   `GlobalExceptionHandler.java`, `ActivityNotFoundException.java` e classes de teste (`ActivityControllerTest.java`).
-- **Frontend:** `activityService.ts` e `useActivities.ts`.
+- **Frontend:** `activityService.ts`, `useActivities.ts`, `utils/activity.ts` e `RegistrationForm.test.tsx`.
 - **Documentação:** `AI_USAGE.md`, `docs/issue#1.md`, `issue2.md` e descrições de Issues/PRs no GitHub.
 
 ---

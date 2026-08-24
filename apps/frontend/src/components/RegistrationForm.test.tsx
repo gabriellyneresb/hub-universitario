@@ -28,3 +28,25 @@ describe('RegistrationForm', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Inscrição realizada com sucesso!')
   })
 })
+
+it('invalidates activity queries after a successful registration', async () => {
+  vi.spyOn(api, 'post').mockResolvedValue({
+    data: { id: 10, activityId: 1, studentName: 'Maria Souza', studentEmail: 'maria@email.com' },
+  })
+  const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+  const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+  const user = userEvent.setup()
+
+  render(
+    <QueryClientProvider client={client}>
+      <RegistrationForm activityId={1} />
+    </QueryClientProvider>,
+  )
+
+  await user.type(screen.getByLabelText('Nome'), 'Maria Souza')
+  await user.type(screen.getByLabelText('E-mail'), 'maria@email.com')
+  await user.click(screen.getByRole('button', { name: 'Confirmar inscrição' }))
+
+  await screen.findByRole('status')
+  expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['activities'] })
+})

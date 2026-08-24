@@ -10,7 +10,6 @@ package br.edu.hub.exception;
  * e não como falha interna do servidor").</p>
  */
 public class ActivityNotFoundException extends RuntimeException {
-
     /**
      * Cria a exceção com a mensagem que será exposta no corpo da resposta de erro.
      *

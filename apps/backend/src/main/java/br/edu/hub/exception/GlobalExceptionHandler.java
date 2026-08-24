@@ -19,13 +19,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Traduz falhas de validação de {@code @Valid} em {@code 400 Bad Request}, retornando um
-     * mapa de campo/mensagem para orientar a correção do payload.
-     *
-     * @param exception exceção lançada pelo Bean Validation quando o corpo da requisição é inválido.
-     * @return resposta {@code 400} com os erros de campo encontrados.
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new LinkedHashMap<>();
@@ -39,14 +32,10 @@ public class GlobalExceptionHandler {
      * Traduz a ausência de um recurso (por exemplo, uma atividade inexistente) em
      * {@code 404 Not Found}.
      *
-     * <p>Correção do bug P2: essa exceção passou a ter um tratamento dedicado. Antes, o
-     * identificador inexistente disparava {@link IllegalArgumentException}, capturada pelo
-     * handler abaixo e respondida como {@code 500 Internal Server Error}, contrariando a regra
-     * do produto de que "um identificador inexistente é tratado como recurso não encontrado, e
-     * não como falha interna do servidor".</p>
-     *
-     * @param exception exceção que sinaliza que o recurso não foi encontrado.
-     * @return resposta {@code 404} com uma mensagem compreensível para o cliente.
+     * <p>Correção do bug P2: antes, um identificador inexistente disparava
+     * {@link IllegalArgumentException}, respondida como {@code 500 Internal Server Error},
+     * contrariando o contrato do {@code PROJECT.md}. Agora usa {@link ActivityNotFoundException},
+     * tratada explicitamente como {@code 404}.</p>
      */
     @ExceptionHandler(ActivityNotFoundException.class)
     ResponseEntity<ErrorResponse> handleActivityNotFound(ActivityNotFoundException exception) {
@@ -55,16 +44,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Traduz uma tentativa de inscrição em atividade lotada/encerrada em {@code 409 Conflict}
+     * (correção do bug P1).
+     */
+    @ExceptionHandler(ActivityFullException.class)
+    ResponseEntity<ErrorResponse> handleActivityFull(ActivityFullException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(exception.getMessage()));
+    }
+
+    /**
      * Traduz argumentos inválidos genéricos em {@code 400 Bad Request}.
-     *
-     * <p>Este handler existia anteriormente respondendo {@code 500 Internal Server Error}, o
-     * que é semanticamente incorreto: um {@link IllegalArgumentException} representa uma entrada
-     * inválida fornecida pelo cliente, não uma falha interna do servidor. Ele foi ajustado para
-     * {@code 400}, e o caso específico de "atividade não encontrada" passou a usar
-     * {@link ActivityNotFoundException}/{@code 404}, tratado pelo handler acima.</p>
-     *
-     * @param exception exceção de argumento inválido.
-     * @return resposta {@code 400} com uma mensagem compreensível para o cliente.
      */
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception) {

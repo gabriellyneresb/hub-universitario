@@ -47,8 +47,18 @@ public class GlobalExceptionHandler {
      * Traduz uma tentativa de inscrição em atividade lotada/encerrada em {@code 409 Conflict}
      * (correção do bug P1).
      */
-    @ExceptionHandler(ActivityFullException.class)
+   @ExceptionHandler(ActivityFullException.class)
     ResponseEntity<ErrorResponse> handleActivityFull(ActivityFullException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(exception.getMessage()));
+    }
+
+    /**
+     * Traduz uma tentativa de inscrição com um e-mail já registrado na mesma atividade
+     * em {@code 409 Conflict}.
+     */
+    @ExceptionHandler(DuplicateRegistrationException.class)
+    ResponseEntity<ErrorResponse> handleDuplicateRegistration(DuplicateRegistrationException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(exception.getMessage()));
     }

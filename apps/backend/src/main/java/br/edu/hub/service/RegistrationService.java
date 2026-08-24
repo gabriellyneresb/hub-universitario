@@ -9,6 +9,7 @@ import br.edu.hub.repository.RegistrationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import br.edu.hub.exception.ActivityFullException;
+import br.edu.hub.exception.DuplicateRegistrationException;
 
 import java.util.List;
 
@@ -27,10 +28,13 @@ public class RegistrationService {
     }
 //alteracao princpal para correçao do problema
         @Transactional
-    public RegistrationResponse register(Long activityId, RegistrationRequest request) {
+        public RegistrationResponse register(Long activityId, RegistrationRequest request) {
         Activity activity = activityService.requireActivity(activityId);
         if (activity.getRegisteredCount() >= activity.getCapacity()) {
             throw new ActivityFullException("Activity is full");
+        }
+        if (registrationRepository.existsByActivityIdAndStudentEmailIgnoreCase(activityId, request.studentEmail())) {
+            throw new DuplicateRegistrationException("Email already registered for this activity");
         }
         Registration registration = registrationRepository.save(
                 new Registration(activity, request.studentName(), request.studentEmail())

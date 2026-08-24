@@ -78,7 +78,7 @@ class ActivityControllerTest {
                 .andExpect(jsonPath("$.message").value("Activity is full"));
     }
 
-    @Test
+       @Test
     void shouldCreateRegistrationForOpenActivity() throws Exception {
         mockMvc.perform(post("/api/activities/{id}/registrations", openActivity.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,9 +90,51 @@ class ActivityControllerTest {
     }
 
     /**
-     * {@code GET /api/activities?search=...} deve encontrar atividades pelo
-     * título, ignorando diferenças entre maiúsculas e minúsculas.
+     * Uma segunda inscrição com o mesmo e-mail na mesma atividade deve ser
+     * recusada com {@code 409 Conflict}, mesmo que o nome informado seja igual.
      */
+    @Test
+    void shouldPreventDuplicateRegistrationWithSameEmail() throws Exception {
+        mockMvc.perform(post("/api/activities/{id}/registrations", openActivity.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"studentName":"Maria Souza","studentEmail":"maria@email.com"}
+                        """));
+
+        mockMvc.perform(post("/api/activities/{id}/registrations", openActivity.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"studentName":"Maria Souza","studentEmail":"maria@email.com"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Email already registered for this activity"));
+    }
+
+    /**
+     * Dois estudantes com o mesmo nome, mas e-mails diferentes, devem poder
+     * se inscrever normalmente na mesma atividade — a validação é por e-mail,
+     * não por nome.
+     */
+    @Test
+    void shouldAllowDifferentStudentsWithSameNameButDifferentEmails() throws Exception {
+        mockMvc.perform(post("/api/activities/{id}/registrations", openActivity.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"studentName":"Maria Souza","studentEmail":"maria.souza@email.com"}
+                        """));
+
+        mockMvc.perform(post("/api/activities/{id}/registrations", openActivity.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"studentName":"Maria Souza","studentEmail":"outra.maria@email.com"}
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    /**
+     * {@code GET /api/activities?search=...} deve encontrar atividades pelo
+    /**
+     
     @Test
     void shouldFilterActivitiesByTitleSearchTermIgnoringCase() throws Exception {
         mockMvc.perform(get("/api/activities").param("search", "workshop"))

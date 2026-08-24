@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
     List<Registration> findByActivityIdOrderByCreatedAtAsc(Long activityId);
+
+    boolean existsByActivityIdAndStudentEmailIgnoreCase(Long activityId, String studentEmail);
 }
